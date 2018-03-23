@@ -173,12 +173,15 @@ val LengthUnitEnum = EnumType(
       Field("droid", Droid,
         arguments = ID :: Nil,
         resolve = Projector((ctx, f) ⇒ ctx.ctx.getDroid(ctx arg ID).get)),
+      Field("character", OptionType(Character),
+        arguments = ID :: Nil,
+        resolve = ctx ⇒ ctx.ctx.getCharacter(ctx arg ID)),
       Field("search", ListType(OptionType(SearchResultType)),
         arguments = textArg :: Nil,
         resolve = (ctx) ⇒ ctx.ctx.search(ctx.arg(textArg))),
       Field("starship", OptionType(Starship),
         arguments = ID :: Nil,
-        resolve = ctx ⇒ ctx.ctx.getStarship(ctx arg ID)),
+        resolve = ctx ⇒ ctx.ctx.getStarship(ctx arg ID))
     ))
 
 

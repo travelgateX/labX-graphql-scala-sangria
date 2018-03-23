@@ -70,6 +70,13 @@ class CharacterRepo {
   def getHero(episode: Option[Episode.Value]) =
     episode flatMap (_ ⇒ getHuman("1000")) getOrElse droids.last
 
+  def getCharacter(id: String) : Option[Character] = {
+    val h = getHuman(id)
+    h match {
+      case Some(_) => h
+      case None => getDroid(id)
+    }
+  }
 
   def getLength(length: Double, unit: Option[LengthUnit.Value]) =
     unit match {
@@ -77,9 +84,6 @@ class CharacterRepo {
       case Some(x) => if (x == LengthUnit.METER) length else { length * 3 }
     }
   def search(text: String) : List[Option[CharacterRepo]] = {
-    /*println(humans.filter(h =>    h.name.contains(text) || h.id.contains(text)))
-    println(droids.filter(h =>    h.name.contains(text) || h.id.contains(text)))
-    println(starships.filter(h => h.name.contains(text) || h.id.contains(text)))*/
     (humans.filter(h => (h.name match { case Some(x) => x.contains(text) case None => false }) || h.id.contains(text)) ::: droids.filter(d => (d.name match { case Some(x) => x.contains(text) case None => false }) || d.id.contains(text)) ::: starships.filter(s => s.name.contains(text) || s.id.contains(text))).asInstanceOf[List[Option[CharacterRepo]]]
   }
 
