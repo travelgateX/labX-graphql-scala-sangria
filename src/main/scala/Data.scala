@@ -1,7 +1,9 @@
 object Episode extends Enumeration {
   val NEWHOPE, EMPIRE, JEDI = Value
 }
-
+object LengthUnit extends Enumeration {
+  val METER, FOOT = Value
+}
 trait Character {
   def id: String
   def name: Option[String]
@@ -32,6 +34,12 @@ case class StarShip (
   length: Double
 )
 
+case class Review(
+                  stars: Int,
+                  commentary: Option[String],
+                  episode: Episode.Value
+                 )
+
 class CharacterRepo {
   import CharacterRepo._
 
@@ -40,10 +48,14 @@ class CharacterRepo {
 
   def getHuman(id: String): Option[Human] = humans.find(c ⇒ c.id == id)
 
+  def getReview(episode: Episode.Value): Review = reviews.find(c ⇒ c.episode == episode).orNull
+
   def getDroid(id: String): Option[Droid] = droids.find(c ⇒ c.id == id)
 }
 
 object CharacterRepo {
+  var reviews = List[Review](  )
+
   val humans = List(
     Human(
       id = "1000",

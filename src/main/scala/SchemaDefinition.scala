@@ -29,6 +29,19 @@ object SchemaDefinition {
         value = Episode.JEDI,
         description = Some("Released in 1983."))))
 
+val LengthUnitEnum = EnumType(
+    "LengthUnit",
+    Some("Units of height"),
+    List(
+      EnumValue("METER",
+        value = LengthUnit.METER,
+        description = Some("The standard unit around the world")),
+      EnumValue("FOOT",
+        value = LengthUnit.FOOT,
+        description = Some("Primarily used in the United States"))
+        )
+)
+
   val Character: InterfaceType[CharacterRepo, Character] =
     InterfaceType(
       "Character",
@@ -94,17 +107,33 @@ object SchemaDefinition {
         resolve = _.value.primaryFunction)
     ))
 
+  val Review = ObjectType ("Review",
+    "Represents a review for a movie.",
+    fields[CharacterRepo, Review](
+      Field("stars", IntType,
+        Some("The number of stars this review gave, 1-5"),
+        resolve = _.value.stars),
+      Field("commentary", OptionType(StringType),
+        Some("Comment about the movie"),
+        resolve = _.value.commentary),
+    ))
+
   val ID = Argument("id", StringType, description = "id of the character")
 
   val EpisodeArg = Argument("episode", OptionInputType(EpisodeEnum),
+    description = "If omitted, returns the hero of the whole saga. If provided, returns the hero of that particular episode.")
+
+  val EpisodeArgMand = Argument("episode", EpisodeEnum,
     description = "If omitted, returns the hero of the whole saga. If provided, returns the hero of that particular episode.")
 
   val Query = ObjectType(
     "Query", fields[CharacterRepo, Unit](
       Field("hero", Character,
         arguments = EpisodeArg :: Nil,
-        deprecationReason = Some("Use `human` or `droid` fields instead"),
         resolve = (ctx) ⇒ ctx.ctx.getHero(ctx.arg(EpisodeArg))),
+      Field("reviews", Review,
+        arguments = EpisodeArg :: Nil,
+        resolve = (ctx) ⇒ ctx.ctx.getReview(ctx arg(EpisodeArgMand))),
       Field("human", OptionType(Human),
         arguments = ID :: Nil,
         resolve = ctx ⇒ ctx.ctx.getHuman(ctx arg ID)),

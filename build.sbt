@@ -19,5 +19,3 @@ Revolver.settings
 enablePlugins(JavaAppPackaging)
 
 enablePlugins(DockerPlugin)
-
-mainClass in Compile := Some("server")
