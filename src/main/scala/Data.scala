@@ -15,7 +15,7 @@ trait Character {
   def appearsIn: List[Episode.Value]
 }
 
-case class Human(
+case class HumanClass(
   id: String,
   name: Option[String],
   friends: List[String],
@@ -25,18 +25,18 @@ case class Human(
   mass: Int,
   starShip: List[String]) extends Character
 
-case class Droid(
+case class DroidClass(
   id: String,
   name: Option[String],
   friends: List[String],
   appearsIn: List[Episode.Value],
   primaryFunction: Option[String]) extends Character
 
-case class StarShip (
-  id: String,
-  name: String,
-  length: Double
-)
+case class StarshipClass (
+                      id: String,
+                      name: String,
+                      length: Double
+                    )
 
 case class ReviewClass(
                   stars: Int,
@@ -48,14 +48,14 @@ class CharacterRepo {
 
   import CharacterRepo._
 
-  def getHero(episode: Option[Episode.Value]) =
-    episode flatMap (_ ⇒ getHuman("1000")) getOrElse droids.last
 
-  def getHuman(id: String): Option[Human] = humans.find(c ⇒ c.id == id)
+  def getHuman(id: String): Option[HumanClass] = humans.find(c ⇒ c.id == id)
+
+  def getStarship(id: String): Option[StarshipClass] = starships.find(c ⇒ c.id == id)
 
   def getReviews(episode: Episode.Value): List[ReviewClass] = reviews.getOrElse(episode, Nil)
 
-  def getDroid(id: String): Option[Droid] = droids.find(c ⇒ c.id == id)
+  def getDroid(id: String): Option[DroidClass] = droids.find(c ⇒ c.id == id)
 
   def createReview(episode: Episode.Value, review: ReviewClass): Option[ReviewClass] = {
     reviews.get(episode) match {
@@ -66,6 +66,23 @@ class CharacterRepo {
     }
     Option(review)
   }
+
+  def getHero(episode: Option[Episode.Value]) =
+    episode flatMap (_ ⇒ getHuman("1000")) getOrElse droids.last
+
+
+  def getLength(length: Double, unit: Option[LengthUnit.Value]) =
+    unit match {
+      case None => length
+      case Some(x) => if (x == LengthUnit.METER) length else { length * 3 }
+    }
+  def search(text: String) : List[Option[CharacterRepo]] = {
+    /*println(humans.filter(h =>    h.name.contains(text) || h.id.contains(text)))
+    println(droids.filter(h =>    h.name.contains(text) || h.id.contains(text)))
+    println(starships.filter(h => h.name.contains(text) || h.id.contains(text)))*/
+    (humans.filter(h => (h.name match { case Some(x) => x.contains(text) case None => false }) || h.id.contains(text)) ::: droids.filter(d => (d.name match { case Some(x) => x.contains(text) case None => false }) || d.id.contains(text)) ::: starships.filter(s => s.name.contains(text) || s.id.contains(text))).asInstanceOf[List[Option[CharacterRepo]]]
+  }
+
 }
 
 
@@ -75,7 +92,7 @@ object CharacterRepo {
   )
 
   val humans = List(
-    Human(
+    HumanClass(
       id = "1000",
       name = Some("Luke Skywalker"),
       friends = List("1002", "1003", "2000", "2001"),
@@ -84,7 +101,7 @@ object CharacterRepo {
       height = 1.72,
       mass = 77,
       starShip = List("3001","3003")),
-    Human(
+    HumanClass(
       id = "1001",
       name = Some("Darth Vader"),
       friends = List("1004"),
@@ -93,7 +110,7 @@ object CharacterRepo {
       height = 2.02,
       mass = 136,
       starShip = List("3002")),
-    Human(
+    HumanClass(
       id = "1002",
       name = Some("Han Solo"),
       friends = List("1000", "1003", "2001"),
@@ -102,7 +119,7 @@ object CharacterRepo {
       height = 1.8,
       mass = 80,
       starShip = List("3000","3003")),
-    Human(
+    HumanClass(
       id = "1003",
       name = Some("Leia Organa"),
       friends = List("1000", "1002", "2000", "2001"),
@@ -111,7 +128,7 @@ object CharacterRepo {
       height = 1.5,
       mass = 49,
       starShip = List("")),
-    Human(
+    HumanClass(
       id = "1004",
       name = Some("Wilhuff Tarkin"),
       friends = List("1001"),
@@ -123,13 +140,13 @@ object CharacterRepo {
   )
 
   val droids = List(
-    Droid(
+    DroidClass(
       id = "2000",
       name = Some("C-3PO"),
       friends = List("1000", "1002", "1003", "2001"),
       appearsIn = List(Episode.NEWHOPE, Episode.EMPIRE, Episode.JEDI),
       primaryFunction = Some("Protocol")),
-    Droid(
+    DroidClass(
       id = "2001",
       name = Some("R2-D2"),
       friends = List("1000", "1002", "1003"),
@@ -137,23 +154,23 @@ object CharacterRepo {
       primaryFunction = Some("Astromech"))
   )
 
-  val startShips = List(
-    StarShip(
+  val starships = List(
+    StarshipClass(
         id = "3000",
         name = "Millennium Falcon",
         length = 34.37
     ),
-    StarShip(
+    StarshipClass(
       id = "3001",
       name = "X-Wing",
       length = 12.5
     ),
-    StarShip(
+    StarshipClass(
       id = "3002",
       name = "TIE Advanced x1",
       length = 9.2
     ),
-    StarShip(
+    StarshipClass(
       id = "3003",
       name = "Imperial shuttle",
       length = 20

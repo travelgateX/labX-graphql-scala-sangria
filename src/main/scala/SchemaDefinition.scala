@@ -6,6 +6,10 @@ import sangria.schema._
 import sangria.macros.derive._
 import scala.concurrent.Future
 
+import sangria.schema._
+
+
+
 /**
  * Defines a GraphQL schema for the current project
  */
@@ -70,8 +74,8 @@ val LengthUnitEnum = EnumType(
     ObjectType(
       "Human",
       "A humanoid creature in the Star Wars universe.",
-      interfaces[CharacterRepo, Human](Character),
-      fields[CharacterRepo, Human](
+      interfaces[CharacterRepo, HumanClass](Character),
+      fields[CharacterRepo, HumanClass](
         Field("id", StringType,
           Some("The id of the human."),
           resolve = _.value.id),
@@ -92,8 +96,8 @@ val LengthUnitEnum = EnumType(
   val Droid = ObjectType(
     "Droid",
     "A mechanical creature in the Star Wars universe.",
-    interfaces[CharacterRepo, Droid](Character),
-    fields[CharacterRepo, Droid](
+    interfaces[CharacterRepo, DroidClass](Character),
+    fields[CharacterRepo, DroidClass](
       Field("id", StringType,
         Some("The id of the droid."),
         tags = ProjectionName("_id") :: Nil,
@@ -122,14 +126,37 @@ val LengthUnitEnum = EnumType(
         Some("Comment about the movie"),
         resolve = _.value.commentary),
     ))
+  val LengthUnitArg = Argument("unit",    OptionInputType(LengthUnitEnum),
+    description = "If omitted, returns length in Meters.")
+  val Starship = ObjectType(
+    "Starship",
+    "",
+    fields[CharacterRepo, StarshipClass](
+      Field("id", StringType,
+        Some("The id of the starship."),
+        tags = ProjectionName("_id") :: Nil,
+        resolve = _.value.id),
+      Field("name", OptionType(StringType),
+        Some("The name of the starship."),
+        resolve = ctx ⇒ Future.successful(ctx.value.name)),
+      Field("length", FloatType,
+        arguments = LengthUnitArg :: Nil,
+        resolve = (ctx) ⇒ ctx.ctx.getLength(ctx.value.length, ctx.arg(LengthUnitArg)))
+
+    ))
+  val SearchResultType =  UnionType[CharacterRepo]("SearchResult",types = Human :: Droid :: Starship ::Nil)
 
 //  val SearchType = UnionType[Unit] ("SearchResult", types = List[Human, Droid])
   val ID = Argument("id", StringType, description = "id of the character")
+  val textArg = Argument("text", StringType)
 
   val EpisodeArg = Argument("episode", OptionInputType(EpisodeEnum),
     description = "If omitted, returns the hero of the whole saga. If provided, returns the hero of that particular episode.")
   val EpisodeArgMand = Argument("episode", EpisodeEnum,
     description = "If omitted, returns the hero of the whole saga. If provided, returns the hero of that particular episode.")
+
+
+
 
 
   val Query = ObjectType(
@@ -145,7 +172,13 @@ val LengthUnitEnum = EnumType(
         resolve = ctx ⇒ ctx.ctx.getHuman(ctx arg ID)),
       Field("droid", Droid,
         arguments = ID :: Nil,
-        resolve = Projector((ctx, f) ⇒ ctx.ctx.getDroid(ctx arg ID).get))
+        resolve = Projector((ctx, f) ⇒ ctx.ctx.getDroid(ctx arg ID).get)),
+      Field("search", ListType(OptionType(SearchResultType)),
+        arguments = textArg :: Nil,
+        resolve = (ctx) ⇒ ctx.ctx.search(ctx.arg(textArg))),
+      Field("starship", OptionType(Starship),
+        arguments = ID :: Nil,
+        resolve = ctx ⇒ ctx.ctx.getStarship(ctx arg ID)),
     ))
 
 
