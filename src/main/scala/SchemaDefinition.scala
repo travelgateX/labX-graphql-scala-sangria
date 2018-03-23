@@ -1,6 +1,9 @@
+import sangria.marshalling.sprayJson._
+import spray.json.DefaultJsonProtocol._
+
 import sangria.execution.deferred.{Fetcher, HasId}
 import sangria.schema._
-
+import sangria.macros.derive._
 import scala.concurrent.Future
 
 /**
@@ -28,6 +31,8 @@ object SchemaDefinition {
       EnumValue("JEDI",
         value = Episode.JEDI,
         description = Some("Released in 1983."))))
+
+
 
 val LengthUnitEnum = EnumType(
     "LengthUnit",
@@ -109,7 +114,7 @@ val LengthUnitEnum = EnumType(
 
   val Review = ObjectType ("Review",
     "Represents a review for a movie.",
-    fields[CharacterRepo, Review](
+    fields[CharacterRepo, ReviewClass](
       Field("stars", IntType,
         Some("The number of stars this review gave, 1-5"),
         resolve = _.value.stars),
@@ -118,13 +123,14 @@ val LengthUnitEnum = EnumType(
         resolve = _.value.commentary),
     ))
 
+//  val SearchType = UnionType[Unit] ("SearchResult", types = List[Human, Droid])
   val ID = Argument("id", StringType, description = "id of the character")
 
   val EpisodeArg = Argument("episode", OptionInputType(EpisodeEnum),
     description = "If omitted, returns the hero of the whole saga. If provided, returns the hero of that particular episode.")
-
   val EpisodeArgMand = Argument("episode", EpisodeEnum,
     description = "If omitted, returns the hero of the whole saga. If provided, returns the hero of that particular episode.")
+
 
   val Query = ObjectType(
     "Query", fields[CharacterRepo, Unit](
@@ -142,5 +148,43 @@ val LengthUnitEnum = EnumType(
         resolve = Projector((ctx, f) ⇒ ctx.ctx.getDroid(ctx arg ID).get))
     ))
 
-  val StarWarsSchema = Schema(Query)
+
+
+  implicit val reviewFormat = jsonFormat2(ReviewClass)
+  implicit val ReviewInput: InputObjectType[ReviewClass] = deriveInputObjectType[ReviewClass](
+    InputObjectTypeName("ReviewInput")
+  )
+
+  implicit val EpisodeEnumInput = EnumType(
+    "Episode",
+    Some("One of the films in the Star Wars Trilogy"),
+    List(
+      EnumValue("NEWHOPE",
+        value = Episode.NEWHOPE,
+        description = Some("Released in 1977.")),
+      EnumValue("EMPIRE",
+        value = Episode.EMPIRE,
+        description = Some("Released in 1980.")),
+      EnumValue("JEDI",
+        value = Episode.JEDI,
+        description = Some("Released in 1983."))))
+
+
+   val EpisodeArgInputMand= Argument("episode", EpisodeEnumInput,
+    description = "If omitted, returns the hero of the whole saga. If provided, returns the hero of that particular episode.")
+
+   var ReviewInputArgMan = Argument("ReviewInput",ReviewInput)
+
+  val Mutation = ObjectType(
+    "Mutation",
+    fields[CharacterRepo, Unit](
+      Field("createReview",
+        OptionType(Review),
+        arguments = EpisodeArgInputMand :: ReviewInputArgMan :: Nil,
+        resolve = (ctx) => ctx.ctx.createReview(ctx.arg(EpisodeArgInputMand), ctx.arg(ReviewInputArgMan))
+      )
+    )
+  )
+
+  val StarWarsSchema = Schema(Query,Some(Mutation))
 }

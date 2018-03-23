@@ -1,3 +1,7 @@
+import SchemaDefinition.Review
+import spray.json.DefaultJsonProtocol.jsonFormat2
+
+import scala.collection.mutable._
 object Episode extends Enumeration {
   val NEWHOPE, EMPIRE, JEDI = Value
 }
@@ -34,13 +38,14 @@ case class StarShip (
   length: Double
 )
 
-case class Review(
+case class ReviewClass(
                   stars: Int,
-                  commentary: Option[String],
-                  episode: Episode.Value
+                  commentary: Option[String]
                  )
 
+
 class CharacterRepo {
+
   import CharacterRepo._
 
   def getHero(episode: Option[Episode.Value]) =
@@ -48,28 +53,25 @@ class CharacterRepo {
 
   def getHuman(id: String): Option[Human] = humans.find(c ⇒ c.id == id)
 
-  def getReviews(episode: Episode.Value): List[Review] = reviews.filter(c ⇒ c.episode == episode)
+  def getReviews(episode: Episode.Value): List[ReviewClass] = reviews.getOrElse(episode, Nil)
 
   def getDroid(id: String): Option[Droid] = droids.find(c ⇒ c.id == id)
+
+  def createReview(episode: Episode.Value, review: ReviewClass): Option[ReviewClass] = {
+    reviews.get(episode) match {
+      case Some(xs: List[ReviewClass]) => reviews.update(episode, xs :+ review)
+      case None => reviews(episode) = List[ReviewClass] {
+        review
+      }
+    }
+    Option(review)
+  }
 }
 
+
 object CharacterRepo {
-  var reviews = List[Review](
-/*    Review(
-      stars = 0,
-      commentary = Some("1"),
-      episode = Episode.EMPIRE
-    ),
-      Review(
-      stars = 0,
-      commentary = Some("2"),
-      episode = Episode.EMPIRE
-    ),
-      Review(
-      stars = 0,
-      commentary = Some("3"),
-      episode = Episode.JEDI
-    )*/
+  var reviews = Map[Episode.Value, List[ReviewClass]](
+
   )
 
   val humans = List(
