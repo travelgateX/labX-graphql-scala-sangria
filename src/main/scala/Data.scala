@@ -48,13 +48,29 @@ class CharacterRepo {
 
   def getHuman(id: String): Option[Human] = humans.find(c ⇒ c.id == id)
 
-  def getReview(episode: Episode.Value): Review = reviews.find(c ⇒ c.episode == episode).orNull
+  def getReviews(episode: Episode.Value): List[Review] = reviews.filter(c ⇒ c.episode == episode)
 
   def getDroid(id: String): Option[Droid] = droids.find(c ⇒ c.id == id)
 }
 
 object CharacterRepo {
-  var reviews = List[Review](  )
+  var reviews = List[Review](
+/*    Review(
+      stars = 0,
+      commentary = Some("1"),
+      episode = Episode.EMPIRE
+    ),
+      Review(
+      stars = 0,
+      commentary = Some("2"),
+      episode = Episode.EMPIRE
+    ),
+      Review(
+      stars = 0,
+      commentary = Some("3"),
+      episode = Episode.JEDI
+    )*/
+  )
 
   val humans = List(
     Human(
